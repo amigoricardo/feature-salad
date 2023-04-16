@@ -1,0 +1,29 @@
+[tool.poetry]
+name = "feature-salad"
+version = "0.1.0"
+description = ""
+authors = ["Ricardo Amigo <amigo@urbex.city>"]
+readme = "README.md"
+packages = [{include = "feature_salad", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+pandas = "^2.0.0"
+nltk = "^3.8.1"
+pyarrow = "^11.0.0"
+
+[tool.poetry.group.test.dependencies]
+pytest = "^7.2.2"
+
+[tool.poetry.group.publish.dependencies]
+twine = "^4.0.2"
+keyring = "^23.13.1"
+artifacts-keyring = "^0.3.2"
+
+[tool.poetry.group.dev.dependencies]
+optional = true
+jupyterlab = "^3.6.3"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
