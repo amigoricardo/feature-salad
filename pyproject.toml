@@ -17,11 +17,8 @@ pytest = "^7.2.2"
 
 [tool.poetry.group.publish.dependencies]
 twine = "^4.0.2"
-keyring = "^23.13.1"
-artifacts-keyring = "^0.3.2"
 
 [tool.poetry.group.dev.dependencies]
-optional = true
 jupyterlab = "^3.6.3"
 
 [build-system]

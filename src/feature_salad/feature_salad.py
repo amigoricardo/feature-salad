@@ -64,11 +64,6 @@ class FeatureSalad:
         )
         self.X = pd.concat([self.X, X], axis=1)
 
-        # Potentially unnecessary step to remove time from datetime visualisation.
-        # Weird behaviour from Pandas:
-        # %Y, %Y-%m and %Y-%m-%d will all output %Y-%m-%d dates.
-        self.X[self.date_column] = pd.to_datetime(self.X[self.date_column].dt.strftime('%Y-%m-%d'))
-
     def _add_numerical(self):
         """Add numerical features to the dataset"""
         for _ in range(self.n_numerical+self.n_categorical_int):
