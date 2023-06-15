@@ -2,6 +2,7 @@ import random
 import numpy as np
 import nltk
 from nltk.corpus import reuters
+from typing import List
 
 
 class RandomWords:
@@ -12,7 +13,7 @@ class RandomWords:
         ))
         random.shuffle(self.words)
     
-    def get_words(self, n):
+    def get_words(self, n: int = 1) -> List[str]:
         """
         Get n random words
         Args:

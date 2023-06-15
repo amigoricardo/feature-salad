@@ -1,109 +1,85 @@
 import random
 import numpy as np
 import pandas as pd
-from .random_words import RandomWords
+from typing import List
+from pydantic import ValidationError
+import logging
 
+from .utils.random_words import RandomWords
+from .utils.feature_schema import Feature
+
+log = logging.getLogger('feature-salad')
 
 class FeatureSalad:
-    def __init__(self, **kwargs):
+    def __init__(self, samples: int, features: List = []):
         """
-        Keyword Args:
-            n_numerical (int): number of numerical features.
-            n_categorical (int): number of categorical features.
-            n_numerical_int (int): number of numerical features with integer values.
-            n_categorical_int (int): number of categorical features with integer values.
-            extra_numerical_types (list[str]): list of extra numerical types. All `float64` by default.
-            extra_categorical_types (list[str]): list of extra categorical types. All `category` by default.
-            n_samples (int): number of samples.
-            start_date (str): lower bound of date column (%Y-%m-%d).
-            end_date (str): upper bound of date column (%Y-%m-%d).
-            date_column (str): name of the date column. Default: 'date'.
+        Args:
+            samples (int): number of samples.
+            features (list[dict]): array of feature definitions.
         """
-        self.n_numerical = kwargs.get('n_numerical')
-        self.n_categorical = kwargs.get('n_categorical')
-        self.n_numerical_int = kwargs.get('n_numerical_int', 0)
-        self.n_categorical_int = kwargs.get('n_categorical_int', 0)
-        self.extra_numerical_types = kwargs.get('extra_numerical_types')
-        self.extra_categorical_types = kwargs.get('extra_categorical_types')
-        self.n_samples = kwargs.get('n_samples')
-        self.start_date = kwargs.get('start_date')
-        self.end_date = kwargs.get('end_date')
-        self.date_column = kwargs.get('date_column', 'date')
+        self.samples = samples
+        self.features = []
+        for feature in features:
+            try:
+                self.features.append(Feature(**feature))
+            except ValidationError as e:
+                log.error(f'In {feature}:')
+                log.error(e)
         self.rw = RandomWords()
         self.X = pd.DataFrame()
-
-        if self.n_categorical_int>self.n_categorical:
-            raise ValueError('n_categorical_int cannot be larger than n_categorical')
-        
-        if self.n_numerical_int>self.n_numerical:
-            raise ValueError('n_numerical_int cannot be larger than n_numerical')
     
-    def generate(self) -> None:
+    def generate(self) -> pd.DataFrame:
         """Generate dataset"""
-        self._add_dates()
-        self._add_numerical()
-        self._add_categorical()
-        self._update_types()
+        for feature in self.features:
+            for n in range(feature.n):
+                try:
+                    name = [feature.name[n]]
+                except:
+                    name = self.rw.get_words(1)
+                X = self._generate_column(name, feature)
+                self.X = pd.concat([self.X, X], axis=1)
+        return self.X
     
-    def to_parquet(self, *args, **kwargs) -> None:
-        """Save dataset to parquet"""
-        self.X.to_parquet(*args, **kwargs)
-
-    def _add_dates(self) -> None:
-        """Add date column to the dataset"""
-        X = pd.DataFrame(
-            pd.Series(
-                pd.date_range(
-                    start=self.start_date, 
-                    end=self.end_date, 
-                    periods=self.n_samples,
-                    unit='s'
-                )
-            ),
-            columns=[self.date_column]
-        )
-        self.X = pd.concat([self.X, X], axis=1)
-
-    def _add_numerical(self):
-        """Add numerical features to the dataset"""
-        for _ in range(self.n_numerical+self.n_categorical_int):
-            feature_values = np.transpose(
-                np.random.rand(1,self.n_samples) * np.random.randint(1,100)
-            )
+    def _generate_column(self, name: str, feature: Feature) -> pd.DataFrame:
+        if feature.dtype == 'datetime':
             X = pd.DataFrame(
-                feature_values,
-                columns=self.rw.get_words(1),
+                pd.Series(
+                    pd.date_range(
+                        start=feature.between[0], 
+                        end=feature.between[1], 
+                        periods=self.samples,
+                        unit='s'
+                    )
+                ),
+                columns=name
             )
-            self.X = pd.concat([self.X, X], axis=1)
 
-    def _add_categorical(self):
-        """Add categorical features to the dataset"""
-        for _ in range(self.n_categorical-self.n_categorical_int):
-            feature_values = self.rw.get_words(random.randint(2,30))
-            sampled_feature_values = np.random.choice(feature_values, self.n_samples)
+        elif feature.dtype in ['int', 'float']:
+            values = np.random.uniform(*feature.between, size=(self.samples,1))
             X = pd.DataFrame(
-                sampled_feature_values, 
-                columns=self.rw.get_words(1), 
-                dtype='category'
-            )
-            self.X = pd.concat([self.X, X], axis=1)
-    
-    def _update_types(self):
-        """
-        Update data types.
-        """
-        # Some Floats to Integers
-        num_columns = list(self.X.select_dtypes(include='float64').columns)
-        num_columns_to_update = random.sample(
-            num_columns, 
-            self.n_categorical_int+self.n_numerical_int
-        )
-        self.X = self.X.astype(dict.fromkeys(num_columns_to_update, 'int64'))
+                values, 
+                columns=name
+            ).astype(feature.dtype)
 
-        # Some Integers to Categories
-        int_columns = list(self.X.select_dtypes(include='int64').columns)
-        int_columns_to_update = random.sample(
-            int_columns, 
-            self.n_categorical_int
-        )
-        self.X = self.X.astype(dict.fromkeys(int_columns_to_update, 'category'))
+        elif feature.dtype in ['category', 'string']:
+            if feature.made_of == 'words':
+                distinct_values = self.rw.get_words(feature.distinct)
+            elif feature.made_of == 'integers':
+                lb = feature.between[0]
+                ub = feature.between[1]+1
+                distinct_values = random.sample(range(lb,ub), feature.distinct)
+            values = np.random.choice(distinct_values, self.samples)
+            X = pd.DataFrame(
+                values, 
+                columns=name, 
+                dtype=feature.dtype
+            )
+
+        elif feature.dtype == 'boolean':
+            values = np.random.choice([False, True], size=(self.samples, 1))
+            X = pd.DataFrame(
+                values,
+                columns=name,
+            )
+
+        return X
