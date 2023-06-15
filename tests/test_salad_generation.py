@@ -44,7 +44,7 @@ def category_integers_feature() -> Dict:
 @pytest.fixture
 def boolean_feature() -> Dict:
     return {
-        'n': 1,
+        'n': 2,
         'dtype': 'boolean'
     }
 
@@ -106,6 +106,13 @@ def int_df(int_feature, samples) -> DataFrame:
         samples=samples
     )
 
+@pytest.fixture
+def multi_column_df(boolean_feature, float_feature, samples) -> DataFrame:
+    return feature_df(
+        features=[boolean_feature, float_feature],
+        samples=samples
+    )
+
 
 def test_datetime_df(datetime_df, datetime_feature) -> None:
     assert ptypes.is_datetime64_any_dtype(datetime_df.iloc[:, 0])
@@ -122,7 +129,6 @@ def test_category_integers_df(category_integers_df) -> None:
 
 def test_boolean_df(boolean_df, samples) -> None:
     assert ptypes.is_bool_dtype(boolean_df.iloc[:, 0])
-    assert len(boolean_df.index) == samples, 'wrong number of samples.'
 
 def test_float_df(float_df, float_feature) -> None:
     assert ptypes.is_float_dtype(float_df.iloc[:, 0])
@@ -133,3 +139,8 @@ def test_int_df(int_df, int_feature) -> None:
     assert ptypes.is_integer_dtype(int_df.iloc[:, 0])
     assert int_df.iloc[:, 0].min() >= int_feature['between'][0], 'values out of range.'
     assert int_df.iloc[:, 0].max() <= int_feature['between'][1], 'values out of range.'
+
+def test_multi_column_df(multi_column_df, boolean_feature, float_feature, samples) -> None:
+    cols = boolean_feature['n'] + float_feature['n']
+    assert len(multi_column_df.index) == samples, 'wrong number of samples.'
+    assert len(multi_column_df.columns) == cols, 'wrong number of features.'
