@@ -24,7 +24,7 @@ class Feature(BaseModel):
 
     @validator('name')
     def validate_name(cls, v, values):
-        assert len(v) < values['n'], 'too many names for "n" chosen.'
+        assert len(v) <= values['n'], 'too many names for "n" chosen.'
         return v
 
     @validator('made_of')
