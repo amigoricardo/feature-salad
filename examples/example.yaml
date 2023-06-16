@@ -1,0 +1,16 @@
+samples: 100
+features:
+  - dtype: datetime
+    name: [date]
+    between: ['2022-01-01', '2022-12-31']
+  - dtype: category
+    n: 2
+    distinct: 8
+  - dtype: category
+    made_of: integers
+    between: [30, 55]
+  - dtype: boolean
+  - dtype: float
+    between: [0.0, 1.0]
+  - dtype: int
+    between: [20, 80]
