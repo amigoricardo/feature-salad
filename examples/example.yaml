@@ -1,7 +1,7 @@
 samples: 100
 features:
   - dtype: datetime
-    name: [date]
+    names: [date]
     between: ['2022-01-01', '2022-12-31']
   - dtype: category
     n: 2

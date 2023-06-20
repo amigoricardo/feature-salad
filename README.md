@@ -44,7 +44,7 @@ and `<output_file>` sets the file where the resulting dataset will be saved to. 
 ### Feature Groups Definition
 Feature groups are defined based on the following parameters:
 - `n` [optional]: number of features in the group. If not provided, only one feature will be generated.
-- `name` [optional]: list with feature names. If not provided, random names will be generated. If less than `n` names are provided, the remaining ones will be randomly generated.
+- `names` [optional]: list with feature names. If not provided, random names will be generated. If less than `n` names are provided, the remaining ones will be randomly generated.
 - `dtype`: data type of the features in the group, it can be `datetime`, `int`, `float`, `category` `string` or `boolean`.
 
 For `datetime`, `int` and `float` only:
@@ -60,7 +60,7 @@ from feature_salad import FeatureSalad
 feature_groups = [
     {'n': 3, 'dtype': 'boolean'},
     {'n': 4, 'dtype': 'category', 'made_of': 'words'},
-    {'dtype': 'datetime', 'name': ['event_date'], 'between': ['2022-01-01', '2022-12-31']}
+    {'dtype': 'datetime', 'names': ['event_date'], 'between': ['2022-01-01', '2022-12-31']}
 ]
 fs = FeatureSalad(samples=500, features=feature_groups)
 fs.generate()
@@ -78,7 +78,7 @@ features:
       dtype: category
       made_of: words
     - dtype: datetime
-      name: [event_date]
+      names: [event_date]
       between: ['2022-01-01', '2022-12-31']
 ```
 Command:

@@ -6,7 +6,7 @@ from datetime import datetime
 class Feature(BaseModel):
     dtype: str
     n: int = 1
-    name: List = []
+    names: List = []
     made_of: str = 'words'
     between: List[int|float|str] = [0, 100]
     distinct: int = 10
@@ -22,18 +22,28 @@ class Feature(BaseModel):
         assert v > 0, 'must be a positive integer.'
         return v
 
-    @validator('name')
-    def validate_name(cls, v, values):
+    @validator('names')
+    def validate_names(cls, v, values):
         assert len(v) <= values['n'], 'too many names for "n" chosen.'
         return v
 
     @validator('made_of')
-    def validate_made_of(cls, v):
+    def validate_made_of(cls, v, values):
+        assert values['dtype'] in ['category', 'string'], \
+            'can only be used with "category" and "string" data types.'
         assert v in ['words', 'integers'], 'must be either "words" or "integers".'
+        return v
+    
+    @validator('distinct')
+    def validate_distinct(cls, v, values):
+        assert values['dtype'] in ['category', 'string'], \
+            'can only be used with "category" and "string" data types.'
         return v
     
     @validator('between')
     def validate_between(cls, v, values):
+        assert values['dtype'] in ['datetime', 'int', 'float'], \
+            'can only be used with "datetime", "int" and "float" data types.'
         assert len(v) == 2, 'must be an array of the format [lower_bound, upper_bound].'
         assert type(v[0]) == type(v[1]), 'bounds have different types.'
         if values['dtype'] == 'datetime':

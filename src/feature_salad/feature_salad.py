@@ -33,7 +33,7 @@ class FeatureSalad:
         for feature in self.features:
             for n in range(feature.n):
                 try:
-                    name = [feature.name[n]]
+                    name = [feature.names[n]]
                 except:
                     name = self.rw.get_words(1)
                 X = self._generate_column(name, feature)
